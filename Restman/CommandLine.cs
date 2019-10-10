@@ -20,20 +20,28 @@ namespace Restman
         {
         }
 
-        public static CommandLine Parse(string[] args)
+        public static CommandLine Parse(string[] argArray)
         {
+            var args = argArray.ToList();
+
             var cl = new CommandLine();
+            // Put all the things that are defined by named options first
             cl.SpecFile = GetSpecFile(args);
-            cl.Request = args.Length > 0 && !args[0].StartsWith('-') && args[0].IndexOf('=') == -1 ? args[0] : throw new Exception("Request name expected");
             cl.VariableSets = GetVariableSets(args);
-            cl.OrderedVariables = GetOrderedVariables(args);
-            cl.AdditionalVariables = GetAdditionalVariables(args);
             cl.BifoqlQuery = FindArg("-b", "--bifoql", args);
+
+            cl.AdditionalVariables = GetAdditionalVariables(args);
+            
+            // Now the only things left are things without "-" or "="
+            cl.Request = args.Count > 0 ? args[0] : throw new Exception("Request name expected");
+            args.RemoveAt(0);
+
+            cl.OrderedVariables = args.ToArray();
 
             return cl;
         }
 
-        private static IReadOnlyList<string> GetVariableSets(string[] args)
+        private static IReadOnlyList<string> GetVariableSets(List<string> args)
         {
             var sets = FindArg("-v", "--variablesets", args);
             if (sets == null)
@@ -44,7 +52,7 @@ namespace Restman
             return sets.Split(',').Select(s => s.Trim()).ToList();
         }
 
-        private static string GetSpecFile(string[] args)
+        private static string GetSpecFile(List<string> args)
         {
             var file = FindArg("-f", "--file", args);
             if (file != null)
@@ -69,64 +77,56 @@ namespace Restman
             }
         }
 
-        private static IReadOnlyList<string> GetOrderedVariables(string[] args)
+        private static IReadOnlyDictionary<string, string> GetAdditionalVariables(List<string> args)
         {
-            var list = new List<string>();
-            for (int i = 1; i < args.Length; i++)
-            {
-                if (!args[i].StartsWith('-') && args[i].IndexOf('=') == -1)
-                {
-                    list.Add(args[i]);
-                }
-            }
-
-            return list;
-        }
-
-        private static IReadOnlyDictionary<string, string> GetAdditionalVariables(string[] args)
-        {
-            bool skipNext = false;
+            var i = 0;
             var additionalVariables = new Dictionary<string, string>();
 
-            foreach (var arg in args)
+            while (i < args.Count)
             {
-                if (arg.StartsWith("-"))
+                var idx = args[i].IndexOf('=');
+                if (idx != -1)
                 {
-                    skipNext = true;
-                    continue;
+                    var key = args[i].Substring(0, idx);
+                    var value = args[i].Substring(idx+1);
+
+                    additionalVariables[key] = value;
+
+                    args.RemoveAt(i);
                 }
-
-                if (skipNext) continue;
-
-                skipNext = false;
-
-                var equals = arg.IndexOf('=');
-                if (equals == -1) continue;
-
-                var key = arg.Substring(0, equals);
-                var value = arg.Substring(equals+1);
-
-                additionalVariables[key] = value;
+                else
+                {
+                    i++;
+                }
             }
 
             return additionalVariables;
         }
 
-        private static string FindArg(string shortName, string longName, string[] args)
+        private static string FindArg(string shortName, string longName, List<string> args)
         {
-            for (int i = 0; i < args.Length; i++)
+            var index = args.IndexOf(shortName) != -1 ? args.IndexOf(shortName) : args.IndexOf(longName);
+            if (index == -1 || index >= args.Count)
             {
-                if (args[i] == shortName || args[i] == longName)
-                {
-                    if (i+1 == args.Length)
-                    {
-                        throw new Exception("Missing argument " + shortName);
-                    }
-                    return args[i+1];
-                }
+                return null;
             }
 
-            return null;
+            args.RemoveAt(index);
+            var value = args[index];
+            args.RemoveAt(index);
+
+            return value;
+        }
+        private static bool FindSwitch(string shortName, string longName, List<string> args)
+        {
+            var index = args.IndexOf(shortName) != -1 ? args.IndexOf(shortName) : args.IndexOf(longName);
+            if (index == -1 || index >= args.Count)
+            {
+                return false;
+            }
+
+            args.RemoveAt(index);
+            return true;
         }
 
         public static void PrintUsage()
