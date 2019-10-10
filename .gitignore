@@ -1,0 +1,6 @@
+.DS_Store
+.vscode
+obj
+bin
+node_modules
+bifoql.sln.DotSettings.user
