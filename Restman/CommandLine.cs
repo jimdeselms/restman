@@ -14,6 +14,8 @@ namespace Restman
 
         public IReadOnlyList<string> VariableSets { get; set; }
 
+        public string BifoqlQuery { get; set; }
+
         private CommandLine()
         {
         }
@@ -26,6 +28,7 @@ namespace Restman
             cl.VariableSets = GetVariableSets(args);
             cl.OrderedVariables = GetOrderedVariables(args);
             cl.AdditionalVariables = GetAdditionalVariables(args);
+            cl.BifoqlQuery = FindArg("-b", "--bifoql", args);
 
             return cl;
         }

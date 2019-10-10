@@ -19,7 +19,8 @@ namespace Restman
                 commandLineArgs.Request, 
                 commandLineArgs.VariableSets,
                 commandLineArgs.AdditionalVariables,
-                commandLineArgs.OrderedVariables);
+                commandLineArgs.OrderedVariables,
+                commandLineArgs.BifoqlQuery);
 
             Console.WriteLine(response);
         }

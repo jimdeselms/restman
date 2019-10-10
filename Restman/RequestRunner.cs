@@ -10,7 +10,7 @@ namespace Restman
 {
     class RequestRunner
     {
-        public static async Task<string> RunRequest(RestmanSpec spec, string requestName, IReadOnlyList<string> variableSets, IReadOnlyDictionary<string, string> variableOverrides, IReadOnlyList<string> orderedVariables)
+        public static async Task<string> RunRequest(RestmanSpec spec, string requestName, IReadOnlyList<string> variableSets, IReadOnlyDictionary<string, string> variableOverrides, IReadOnlyList<string> orderedVariables, string bifoqlQuery)
         {
             var variables = new Dictionary<string, string>();
             if (spec.variableSets != null && spec.variableSets.ContainsKey("default"))
@@ -46,18 +46,20 @@ namespace Restman
             {
                 var builder = new System.Text.StringBuilder();
                 builder.AppendLine("ERROR " + response.StatusCode);
-                builder.Append(await response.Content.ReadAsStringAsync());
+                var rawContent = await response.Content.ReadAsStringAsync();
+                builder.Append(Prettify(rawContent));
                 return builder.ToString();
             }
 
             var content = await response.Content.ReadAsStringAsync();
 
-            if (request.bifoqlQuery != null)
+            var query = bifoqlQuery ?? request.bifoqlQuery;
+            if (query != null)
             {
-                content = await RunBifoqlQuery(content, request.bifoqlQuery);
+                content = await RunBifoqlQuery(content, query);
             }
 
-            return content;
+            return Prettify(content);
         }
 
         private static void AddOrdinalVariables(RequestSpec spec, IReadOnlyList<string> orderedVariables, Dictionary<string, string> variables)
@@ -71,6 +73,21 @@ namespace Restman
                         variables[spec.ordinalArgs[i]] = orderedVariables[i];
                     }
                 }
+            }
+        }
+
+        private static string Prettify(string json)
+        {
+            // This might not actually be JSON, so don't fail if it isn't.
+
+            try 
+            {
+                dynamic obj = JsonConvert.DeserializeObject(json);
+                return JsonConvert.SerializeObject(obj, Formatting.Indented);
+            }
+            catch
+            {
+                return json;
             }
         }
 
