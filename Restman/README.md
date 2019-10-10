@@ -7,7 +7,7 @@ Requests are defined in a "spec file" which defines the types of requests that R
 Requests can take arguments which are used for token replacement against the parameterized REST requests.
 
 ## Spec file format
-By default, Restman reads a file called ".restman.json" from either your user directory (~/.restman.json) or the current directory.
+By default, Restman reads a file called `.restman.json` from either your user directory (`~/.restman.json`) or the current directory.
 
     {
         "variableSets": {
