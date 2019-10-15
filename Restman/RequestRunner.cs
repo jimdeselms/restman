@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Bifoql;
 using Newtonsoft.Json;
@@ -10,7 +11,7 @@ namespace Restman
 {
     class RequestRunner
     {
-        public static async Task<string> RunRequest(RestmanSpec spec, string requestName, IReadOnlyList<string> variableSets, IReadOnlyDictionary<string, string> variableOverrides, IReadOnlyList<string> orderedVariables, string bifoqlQuery)
+        public static async Task<string> RunRequest(RestmanSpec spec, string requestName, IReadOnlyList<string> variableSets, IReadOnlyDictionary<string, string> variableOverrides, IReadOnlyList<string> orderedVariables, string bifoqlQuery, string body)
         {
             var variables = new Dictionary<string, string>();
             if (spec.variableSets != null && spec.variableSets.ContainsKey("default"))
@@ -39,6 +40,16 @@ namespace Restman
                 {
                     message.Headers.Add(SubstituteTokens(pair.Key, variables), SubstituteTokens(pair.Value, variables));
                 }
+            }
+
+            // If body was supplied on the command line, it will replace any body defined in the request spec.
+            if (body != null)
+            {
+                message.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            }
+            else if (request.body != null)
+            {
+                message.Content = new StringContent(request.body, Encoding.UTF8, "application/json");
             }
 
             var response = await client.SendAsync(message);

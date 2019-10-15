@@ -16,6 +16,8 @@ namespace Restman
 
         public string BifoqlQuery { get; set; }
 
+        public string Body { get; set; }
+
         private CommandLine()
         {
         }
@@ -28,7 +30,12 @@ namespace Restman
             // Put all the things that are defined by named options first
             cl.SpecFile = GetSpecFile(args);
             cl.VariableSets = GetVariableSets(args);
-            cl.BifoqlQuery = FindArg("-b", "--bifoql", args);
+            cl.BifoqlQuery = FindArg("-q", "--query", args);
+            var bodyFilename = FindArg("-b", "--body", args);
+            if (bodyFilename != null)
+            {
+                cl.Body = File.ReadAllText(bodyFilename);
+            }
 
             cl.AdditionalVariables = GetAdditionalVariables(args);
             

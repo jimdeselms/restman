@@ -15,5 +15,6 @@ namespace Restman
         public Dictionary<string, string> headers { get; set; }
         public string bifoqlQuery { get; set; }
         public IReadOnlyList<string> ordinalArgs { get; set; }
+        public string body { get; set; }
     }
 }
